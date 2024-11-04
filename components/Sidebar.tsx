@@ -4,13 +4,15 @@ import {
   CoinsIcon,
   HomeIcon,
   Layers2Icon,
+  MenuIcon,
   ShieldCheckIcon,
 } from "lucide-react";
-import React from "react";
+import React, { useState } from "react";
 import Logo from "@/components/Logo";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { buttonVariants } from "./ui/button";
+import { Button, buttonVariants } from "./ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
 
 const routes = [
   {
@@ -63,6 +65,33 @@ function DesktopSidebar() {
           </Link>
         ))}
       </div>
+    </div>
+  );
+}
+
+export function MobileSidebar() {
+  const [isOpen, setOpen] = useState(false);
+  const pathname = usePathname();
+  const activeRoute =
+    routes.find(
+      (route) => route.href.length > 0 && pathname.includes(route.href)
+    ) || routes[0];
+
+  return (
+    <div className="block border-separate bg-background md:hidden">
+      <nav className="container flex items-center justify-between px-8">
+        <Sheet open={isOpen} onOpenChange={setOpen}>
+          <SheetTrigger asChild>
+            <Button variant={"ghost"} size={"icon"}>
+              <MenuIcon />
+            </Button>
+          </SheetTrigger>
+          <SheetContent
+            className="w-[400px] sm:w-[540px] space-y-4"
+            side={"left"}
+          ></SheetContent>
+        </Sheet>
+      </nav>
     </div>
   );
 }
