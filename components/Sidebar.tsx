@@ -89,7 +89,26 @@ export function MobileSidebar() {
           <SheetContent
             className="w-[400px] sm:w-[540px] space-y-4"
             side={"left"}
-          ></SheetContent>
+          >
+            <Logo />
+            <div className="flex flex-col gap-1">
+              {routes.map((route) => (
+                <Link
+                  key={route.href}
+                  href={route.href}
+                  className={buttonVariants({
+                    variant:
+                      activeRoute.href === route.href
+                        ? "sidebarActiveItem"
+                        : "sidebarItem",
+                  })}
+                  onClick={() => setOpen((prev) => !prev)}
+                >
+                  <route.icon size={20} /> {route.label}
+                </Link>
+              ))}
+            </div>
+          </SheetContent>
         </Sheet>
       </nav>
     </div>
