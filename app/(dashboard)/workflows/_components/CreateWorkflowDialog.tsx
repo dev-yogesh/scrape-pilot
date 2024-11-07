@@ -3,7 +3,10 @@
 import CustomDialogHeader from "@/components/CustomDialogHeader";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { createWorkflowSchema } from "@/schema/workflow";
+import {
+  createWorkflowSchema,
+  createWorkflowSchemaType,
+} from "@/schema/workflow";
 import { Layers2Icon } from "lucide-react";
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -20,13 +23,21 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useMutation } from "@tanstack/react-query";
+import { CreateWorkflow } from "@/actions/workflows/createWorkflow";
 
 function CreateWorkflowDialog({ triggerText }: { triggerText?: string }) {
   const [open, setOpen] = useState(false);
 
-  const form = useForm<z.infer<typeof createWorkflowSchema>>({
+  const form = useForm<createWorkflowSchemaType>({
     resolver: zodResolver(createWorkflowSchema),
     defaultValues: {},
+  });
+
+  const { mutate, isPending } = useMutation({
+    mutationFn: CreateWorkflow,
+    onSuccess: () => {},
+    onError: () => {},
   });
   return (
     <Dialog open={open} onOpenChange={setOpen}>
