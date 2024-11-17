@@ -7,7 +7,7 @@ export const ExtractTextFromElementTask = {
   icon: (props: LucideProps) => (
     <TextIcon className="stroke-rose-400" {...props} />
   ),
-  isEntryPoint: true,
+  isEntryPoint: false,
   inputs: [
     {
       name: "Html",
