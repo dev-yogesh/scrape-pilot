@@ -44,7 +44,7 @@ function FlowEditor({ workflow }: { workflow: Workflow }) {
       const flow = JSON.parse(workflow.definition);
       if (!flow) return;
       setNodes(flow.nodes || []);
-      setEdges(flow.edeges || []);
+      setEdges(flow.edges || []);
       if (!flow.viewport) return;
       const { x = 0, y = 0, zoom = 1 } = flow.viewport;
       setViewport({ x, y, zoom });
