@@ -4,10 +4,18 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { TaskRegistry } from "@/lib/workflow/task/registry";
 import { TaskType } from "@/types/task";
+import { useReactFlow } from "@xyflow/react";
 import { CoinsIcon, CopyIcon, GripVerticalIcon, TrashIcon } from "lucide-react";
 
-function NodeHeader({ taskType }: { taskType: TaskType }) {
+function NodeHeader({
+  taskType,
+  nodeId,
+}: {
+  taskType: TaskType;
+  nodeId: string;
+}) {
   const task = TaskRegistry[taskType];
+  const { deleteElements } = useReactFlow();
   return (
     <div className="flex items-center gap-2 p-2">
       <task.icon size={16} />
@@ -23,7 +31,15 @@ function NodeHeader({ taskType }: { taskType: TaskType }) {
           </Badge>
           {!task.isEntryPoint && (
             <>
-              <Button variant={"ghost"} size={"icon"}>
+              <Button
+                variant={"ghost"}
+                size={"icon"}
+                onClick={() => {
+                  deleteElements({
+                    nodes: [{ id: nodeId }],
+                  });
+                }}
+              >
                 <TrashIcon size={12} />
               </Button>
               <Button variant={"ghost"} size={"icon"}>
