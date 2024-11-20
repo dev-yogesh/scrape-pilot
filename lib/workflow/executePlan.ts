@@ -30,9 +30,11 @@ export function FlowToExecutionPlan(
     },
   ];
 
+  planned.add(entryPoint.id);
+
   for (
     let phase = 2;
-    phase <= nodes.length || planned.size < nodes.length;
+    phase <= nodes.length && planned.size < nodes.length;
     phase++
   ) {
     const nextPhase: WorkflowExecutionPlanPhase = { phase, nodes: [] };
@@ -58,11 +60,55 @@ export function FlowToExecutionPlan(
       }
 
       nextPhase.nodes.push(currentNode);
-      planned.add(currentNode.id);
     }
+    for (const node of nextPhase.nodes) {
+      planned.add(node.id);
+    }
+    executionPlan.push(nextPhase);
   }
 
   return { executionPlan };
 }
 
-function getInvalidInputs(node: AppNode, edges: Edge[], planned: Set<string>) {}
+function getInvalidInputs(node: AppNode, edges: Edge[], planned: Set<string>) {
+  const invalidInputs = [];
+  const inputs = TaskRegistry[node.data.type].inputs;
+  for (const input of inputs) {
+    const inputValue = node.data.inputs[input.name];
+    const inputValueProvided = inputValue?.length > 0;
+    if (inputValueProvided) {
+      // this input is fine, so we can move on
+      continue;
+    }
+
+    // If a value is not provided by the user then we need to check
+    // If there is an output linked to the current input
+    const incomingEdges = edges.filter((edge) => edge.target === node.id);
+
+    const inputLinkedToOutput = incomingEdges.find(
+      (edge) => edge.targetHandle === input.name
+    );
+
+    const requiredInputProvidedByVisitedOutput =
+      input.required &&
+      inputLinkedToOutput &&
+      planned.has(inputLinkedToOutput.source);
+
+    if (requiredInputProvidedByVisitedOutput) {
+      // the input is required and we have a valid value for it
+      // provided by a task that is already planned
+      continue;
+    } else if (!input.required) {
+      // if the input is not required but there is an output linked to it
+      // then we need to be sure that the output is already planned
+      if (!inputLinkedToOutput) continue;
+      if (inputLinkedToOutput && planned.has(inputLinkedToOutput.source)) {
+        // This output is providing a value to the input: the input is fine
+        continue;
+      }
+    }
+
+    invalidInputs.push(input.name);
+  }
+  return invalidInputs;
+}
