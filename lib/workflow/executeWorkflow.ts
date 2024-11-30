@@ -1,6 +1,10 @@
 import { revalidatePath } from "next/cache";
 import prisma from "../prisma";
-import { WorkflowExecutionStatus } from "@/types/workflow";
+import {
+  ExecutionPhaseStatus,
+  WorkflowExecutionStatus,
+} from "@/types/workflow";
+import { waitFor } from "../helper/waitFor";
 
 export async function ExecuteWorkflow(executionId: string) {
   const execution = await prisma.workflowExecution.findUnique({
@@ -16,14 +20,22 @@ export async function ExecuteWorkflow(executionId: string) {
 
   await initializeWorkflowExecution(executionId, execution.workflowId);
 
-  // TODO: initialize phases status
+  await initializePhaseStatuses(execution);
 
+  let creditsConsumed = 0;
   let executionFailed = false;
   for (const phase of execution.phases) {
+    await waitFor(3000);
+    // TODO: consume credits
     // TODO: execute phase
   }
 
-  // TODO: finalize execution
+  await finalizeWorkflowExecution(
+    executionId,
+    execution.workflowId,
+    executionFailed,
+    creditsConsumed
+  );
   // TODO: clean up environment
 
   revalidatePath("/workflows/runs");
@@ -51,4 +63,53 @@ async function initializeWorkflowExecution(
       lastRunId: executionId,
     },
   });
+}
+
+async function initializePhaseStatuses(execution: any) {
+  await prisma.executionPhase.updateMany({
+    where: {
+      id: {
+        in: execution.phases.map((phase: any) => phase.id),
+      },
+    },
+    data: {
+      status: ExecutionPhaseStatus.PENDING,
+    },
+  });
+}
+
+async function finalizeWorkflowExecution(
+  executionId: string,
+  workflowId: string,
+  executionFailed: boolean,
+  creditsConsumed: number
+) {
+  const finalStatus = executionFailed
+    ? WorkflowExecutionStatus.FAILED
+    : WorkflowExecutionStatus.COMPLETED;
+
+  await prisma.workflowExecution.update({
+    where: { id: executionId },
+    data: {
+      status: finalStatus,
+      completedAt: new Date(),
+      creditsConsumed,
+    },
+  });
+
+  await prisma.workflow
+    .update({
+      where: {
+        id: workflowId,
+        lastRunId: executionId,
+      },
+      data: {
+        lastRunStatus: finalStatus,
+      },
+    })
+    .catch((err) => {
+      // ignore
+      // this means that we have triggered other runs for this workflow
+      // while an execution was running
+    });
 }
