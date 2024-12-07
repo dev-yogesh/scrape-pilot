@@ -25,7 +25,10 @@ import { DatesToDurationString } from "@/lib/helper/dates";
 import { GetPhasesTotalCost } from "@/lib/helper/phases";
 import { cn } from "@/lib/utils";
 import { LogLevel } from "@/types/log";
-import { WorkflowExecutionStatus } from "@/types/workflow";
+import {
+  ExecutionPhaseStatus,
+  WorkflowExecutionStatus,
+} from "@/types/workflow";
 import { ExecutionLog } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
@@ -38,7 +41,8 @@ import {
   LucideIcon,
   WorkflowIcon,
 } from "lucide-react";
-import { ReactNode, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
+import PhaseStatusBadge from "./PhaseStatusBadge";
 
 type ExecutionData = Awaited<ReturnType<typeof GetWorkflowExecutionWithPhases>>;
 
@@ -59,6 +63,23 @@ function ExecutionViewer({ initialData }: { initialData: ExecutionData }) {
   });
 
   const isRunning = query.data?.status === WorkflowExecutionStatus.RUNNING;
+
+  useEffect(() => {
+    // While running we auto-select the current running phase in the sidebar
+    const phases = query.data?.phases || [];
+    if (isRunning) {
+      // Select the last executed phase
+      const phaseToSelect = phases.toSorted((a, b) =>
+        a.startedAt! > b.startedAt! ? -1 : 1
+      )[0];
+      setSelectedPhase(phaseToSelect.id);
+      return;
+    }
+    const phaseToSelect = phases.toSorted((a, b) =>
+      a.completedAt! > b.completedAt! ? -1 : 1
+    )[0];
+    setSelectedPhase(phaseToSelect.id);
+  }, [query.data?.phases, isRunning]);
 
   const duration = DatesToDurationString(
     query?.data?.completedAt,
@@ -131,7 +152,7 @@ function ExecutionViewer({ initialData }: { initialData: ExecutionData }) {
                 <Badge variant={"outline"}>{index + 1}</Badge>
                 <p className="font-semibold">{phase.name}</p>
               </div>
-              <p className="text-xs text-muted-foreground">{phase.status}</p>
+              <PhaseStatusBadge status={phase.status as ExecutionPhaseStatus} />
             </Button>
           ))}
         </div>
