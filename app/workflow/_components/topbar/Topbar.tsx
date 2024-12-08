@@ -35,7 +35,7 @@ function Topbar({ title, subtitle, workflowId, hideButtons = false }: Props) {
           )}
         </div>
       </div>
-      <NavigationTabs />
+      <NavigationTabs workflowId={workflowId} />
       <div className="flex gap-1 flex-1 justify-end">
         {hideButtons == false && (
           <>
