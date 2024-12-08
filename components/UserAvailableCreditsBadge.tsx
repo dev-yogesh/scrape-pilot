@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { CoinsIcon, Loader2Icon } from "lucide-react";
 import Link from "next/link";
 import React from "react";
-import ReactCountupWrapper from "./ReactCountupWrapper";
+import ReactCountupWrapper from "@/components/ReactCountUpWrapper";
 import { buttonVariants } from "./ui/button";
 
 function UserAvailableCreditsBadge() {
@@ -29,7 +29,7 @@ function UserAvailableCreditsBadge() {
         {!query.isLoading && query.data && (
           <ReactCountupWrapper value={query.data} />
         )}
-        {!query.isLoading && !query.data && "-"}
+        {!query.isLoading && query.data === undefined && "-"}
       </span>
     </Link>
   );
