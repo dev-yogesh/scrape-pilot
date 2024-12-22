@@ -13,13 +13,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useMutation } from "@tanstack/react-query";
-import { CalendarIcon, TriangleAlertIcon } from "lucide-react";
+import { CalendarIcon, ClockIcon, TriangleAlertIcon } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 import cronstrue from "cronstrue";
+import parser from "cron-parser";
 
-function SchedulerDialog({ workflowId }: { workflowId: string }) {
-  const [cron, setCron] = useState("");
+function SchedulerDialog(props: { cron: string | null; workflowId: string }) {
+  const [cron, setCron] = useState(props.cron || "");
   const [validCron, setValidCron] = useState(false);
   const [readableCron, setReadableCron] = useState("");
 
@@ -35,6 +36,7 @@ function SchedulerDialog({ workflowId }: { workflowId: string }) {
 
   useEffect(() => {
     try {
+      parser.parseExpression(cron);
       const humanCronStr = cronstrue.toString(cron);
       setValidCron(true);
       setReadableCron(humanCronStr);
@@ -43,17 +45,32 @@ function SchedulerDialog({ workflowId }: { workflowId: string }) {
     }
   }, [cron]);
 
+  const workflowHasValidCron = props.cron && props.cron.length > 0;
+  const readableSavedCron =
+    workflowHasValidCron && cronstrue.toString(props.cron!);
+
   return (
     <Dialog>
       <DialogTrigger asChild>
         <Button
           variant={"link"}
           size={"sm"}
-          className={cn("text-sm p-0 h-auto")}
+          className={cn(
+            "text-sm p-0 h-auto text-orange-500",
+            workflowHasValidCron && "text-primary"
+          )}
         >
-          <div className="flex items-center gap-1">
-            <TriangleAlertIcon className="h-3 w-3" /> Set schedule
-          </div>
+          {workflowHasValidCron && (
+            <div className="flex items-center gap-2">
+              <ClockIcon />
+              {readableSavedCron}
+            </div>
+          )}
+          {!workflowHasValidCron && (
+            <div className="flex items-center gap-1">
+              <TriangleAlertIcon className="h-3 w-3" /> Set schedule
+            </div>
+          )}
         </Button>
       </DialogTrigger>
       <DialogContent className="px-0">
@@ -89,11 +106,11 @@ function SchedulerDialog({ workflowId }: { workflowId: string }) {
           <DialogClose asChild>
             <Button
               className="w-full"
-              disabled={mutation.isPending}
+              disabled={mutation.isPending || !validCron}
               onClick={() => {
                 toast.loading("Saving...", { id: "cron" });
                 mutation.mutate({
-                  id: workflowId,
+                  id: props.workflowId,
                   cron,
                 });
               }}
