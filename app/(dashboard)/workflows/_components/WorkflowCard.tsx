@@ -156,7 +156,7 @@ function ScheduleSection({
   workflowId: string;
   cron: string | null;
 }) {
-  if (!isDraft) return null;
+  if (isDraft) return null;
   return (
     <div className="flex items-center gap-2">
       <CornerDownRightIcon className="h-4 w-4 text-muted-foreground" />
