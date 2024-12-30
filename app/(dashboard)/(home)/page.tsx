@@ -7,6 +7,8 @@ import { GetStatsCardsValues } from "@/actions/analytics/getStatsCardsValues";
 import { CirclePlayIcon, CoinsIcon, WaypointsIcon } from "lucide-react";
 import StatsCard from "./_components/StatsCard";
 import { waitFor } from "@/lib/helper/waitFor";
+import { GetWorkflowExecutionStats } from "@/actions/analytics/getWorkflowExecutionStats";
+import ExecutionStatusChart from "./_components/ExecutionStatusChart";
 
 function HomePage({
   searchParams,
@@ -31,6 +33,10 @@ function HomePage({
       <div className="h-full py-6 flex flex-col gap-4">
         <Suspense fallback={<StatsCardSkeleton />}>
           <StatsCards selectedPeriod={period} />
+        </Suspense>
+
+        <Suspense fallback={<Skeleton className="w-full h-[300px]" />}>
+          <StatsExecutionStatus selectedPeriod={period} />
         </Suspense>
       </div>
     </div>
@@ -79,4 +85,12 @@ function StatsCardSkeleton() {
   );
 }
 
+async function StatsExecutionStatus({
+  selectedPeriod,
+}: {
+  selectedPeriod: Period;
+}) {
+  const data = await GetWorkflowExecutionStats(selectedPeriod);
+  return <ExecutionStatusChart data={data} />;
+}
 export default HomePage;
