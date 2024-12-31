@@ -1,6 +1,8 @@
 "use server";
 
-import { PackId } from "@/types/billing";
+import { getAppUrl } from "@/lib/helper/appUrl";
+import { stripe } from "@/lib/stripe/stripe";
+import { getCreditsPack, PackId } from "@/types/billing";
 import { auth } from "@clerk/nextjs/server";
 
 export async function PurchaseCredits(packId: PackId) {
@@ -8,4 +10,19 @@ export async function PurchaseCredits(packId: PackId) {
   if (!userId) {
     throw new Error("Unauthenticated");
   }
+
+  const selectedPack = getCreditsPack(packId);
+  if (!selectedPack) {
+    throw new Error("invalid pack");
+  }
+  const priceId = selectedPack.priceId;
+
+  const session = await stripe.checkout.sessions.create({
+    mode: "payment",
+    invoice_creation: {
+      enabled: true,
+    },
+    success_url: getAppUrl("billing"),
+    cancel_url: getAppUrl("billing"),
+  });
 }
